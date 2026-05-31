@@ -1,26 +1,74 @@
 import axios from 'axios';
-import { getAccessToken } from './authStorage.js';
+import { API_BASE_URL } from '../config/api.js';
+import {
+  clearSession,
+  extractAccessToken,
+  getAccessToken,
+  getAuthorizationHeader,
+  setAccessToken,
+} from './authStorage.js';
 import { hashPasswordForAuth } from './passwordCrypto.js';
 
-// For testing default to the real backend URL. Override with `VITE_API_BASE_URL` when needed.
-const DEFAULT_API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/openapi/dev';
-
-const api = axios.create({
-  baseURL: DEFAULT_API_BASE,
+const defaultConfig = {
+  baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
-});
+  withCredentials: true,
+};
 
-api.interceptors.request.use((config) => {
+/** Login/logout only — never sends stored JWT */
+export const publicApi = axios.create(defaultConfig);
+
+/** Protected dashboard APIs — always sends Bearer token when available */
+export const api = axios.create(defaultConfig);
+
+let unauthorizedHandler = null;
+
+export function setUnauthorizedHandler(handler) {
+  unauthorizedHandler = handler;
+}
+
+function attachAuthHeader(config) {
   const token = getAccessToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (!token) return config;
+
+  const value = `Bearer ${token}`;
+  if (config.headers?.set) {
+    config.headers.set('Authorization', value);
+  } else {
+    config.headers = {
+      ...(config.headers || {}),
+      Authorization: value,
+    };
   }
   return config;
-});
+}
+
+export function applyAccessTokenToClient() {
+  const token = getAccessToken();
+  if (token) {
+    api.defaults.headers.common.Authorization = `Bearer ${token}`;
+  } else {
+    delete api.defaults.headers.common.Authorization;
+  }
+}
+
+api.interceptors.request.use(attachAuthHeader);
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      clearSession();
+      applyAccessTokenToClient();
+      unauthorizedHandler?.();
+    }
+    return Promise.reject(error);
+  }
+);
 
 export async function authenticate(username, password) {
   const hashedPassword = hashPasswordForAuth(password);
-  const { data } = await api.post('/authenticate', {
+  const { data } = await publicApi.post('/authenticate', {
     username,
     password: hashedPassword,
   });
@@ -28,9 +76,10 @@ export async function authenticate(username, password) {
 }
 
 export async function logout() {
-  const { data } = await api.post('/logout');
+  const { data } = await api.post('/logout', null, {
+    headers: getAuthorizationHeader(),
+  });
   return data;
-  
 }
 
 export async function fetchUserSummary(page = 0, size = 100) {
@@ -39,15 +88,20 @@ export async function fetchUserSummary(page = 0, size = 100) {
 }
 
 export async function fetchUserSessions(userId, page = 0, size = 100) {
-  const { data } = await api.post('/dashboard/summary/session', {
-    userId,
-    page,
-    size,
-  });
+  const { data } = await api.post('/dashboard/summary/session', { userId, page, size });
+  return data;
+}
+
+/** Flattened dynamic rows for dashboard table (server-paginated) */
+export async function fetchDashboardRecords(page = 0, size = 10) {
+  const { data } = await api.post('/dashboard/summary/records', { page, size });
   return data;
 }
 
 export function getApiErrorMessage(error) {
+  if (error?.response?.status === 401) {
+    return 'Session expired or unauthorized. Please sign in again.';
+  }
   const errors = error?.response?.data?.errors;
   if (errors?.message) return errors.message;
   if (typeof errors === 'string') return errors;

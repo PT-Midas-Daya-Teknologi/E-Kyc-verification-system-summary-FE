@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { authenticate, getApiErrorMessage } from './services/api.js';
-import { setSession } from './services/authStorage.js';
+import { applyAccessTokenToClient, authenticate, getApiErrorMessage } from './services/api.js';
+import { clearSession, extractAccessToken, setSession } from './services/authStorage.js';
 
 export default function LoginForm({ onLogin }) {
   const [username, setUsername] = useState('');
@@ -14,15 +14,17 @@ export default function LoginForm({ onLogin }) {
     e.preventDefault();
     setError('');
     setLoading(true);
+    clearSession();
     try {
       const response = await authenticate(username, password);
-      const accessToken = response?.body?.accessToken;
+      const accessToken = extractAccessToken(response);
       if (!response?.success || !accessToken) {
         setError('Invalid username or password');
         return;
       }
       const user = { username, email: username };
       setSession({ accessToken, user });
+      applyAccessTokenToClient();
       onLogin?.(user);
     } catch (err) {
       setError(getApiErrorMessage(err));
