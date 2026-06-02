@@ -29,6 +29,16 @@ export default defineConfig({
               proxyReq.setHeader('Authorization', auth);
             }
           });
+          proxy.on('proxyRes', (proxyRes) => {
+            const setCookie = proxyRes.headers['set-cookie'];
+            if (!Array.isArray(setCookie) || setCookie.length === 0) return;
+
+            // Backend sets cookie path for /openapi/dev; browser requests are /api/* via proxy.
+            // Rewrite cookie path so JSESSIONID is sent on protected dashboard calls.
+            proxyRes.headers['set-cookie'] = setCookie.map((cookie) =>
+              cookie.replace(/Path=\/openapi\/dev/gi, 'Path=/api')
+            );
+          });
         },
       },
     },

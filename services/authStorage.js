@@ -12,7 +12,14 @@ function normalizeToken(token) {
 }
 
 export function extractAccessToken(response) {
-  return response?.body?.accessToken ?? response?.accessToken ?? null;
+  const rawToken =
+    response?.body?.accessToken ??
+    response?.body?.token ??
+    response?.body?.data?.accessToken ??
+    response?.accessToken ??
+    response?.token ??
+    null;
+  return normalizeToken(rawToken);
 }
 
 export function getAccessToken() {

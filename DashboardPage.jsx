@@ -1,12 +1,19 @@
 ﻿import React, { useEffect, useState } from "react";
 import { ShieldCheck, Search, User, LogOut } from "lucide-react";
 import DynamicDataTable from "./components/DynamicDataTable.jsx";
-import { loadAllDashboardRecords } from "./services/dashboardData.js";
 import { rowMatchesSearch } from "./utils/dynamicTableUtils.js";
-import { applyAccessTokenToClient, logout as logoutApi } from "./services/api.js";
+import {
+  applyAccessTokenToClient,
+  fetchSessionDetailBySessionId,
+  fetchUserSessions,
+  fetchUserSummary,
+  getApiErrorMessage,
+  logout as logoutApi,
+} from "./services/api.js";
 import { clearSession } from "./services/authStorage.js";
 
 const PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
+const TABLE_VISIBLE_COLUMNS = ["fullName", "username", "userEmail"];
 
 const containerStyles = {
   height: "100vh",
@@ -208,17 +215,122 @@ export default function DashboardPage({ user, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
+  const loadAllUsers = async () => {
+    const size = 100;
+    const allUsers = [];
+    const first = await fetchUserSummary(0, size);
+    const firstBody = first?.body ?? {};
+    allUsers.push(...(firstBody?.data ?? []));
+
+    const totalPages = Number(firstBody?.totalPages ?? 1);
+    for (let page = 1; page < totalPages; page += 1) {
+      const next = await fetchUserSummary(page, size);
+      allUsers.push(...(next?.body?.data ?? []));
+    }
+
+    return allUsers.map((userItem, index) => ({
+      _rowKey: `user-${userItem?.id ?? index}-${index}`,
+      userId: userItem?.id ?? null,
+      fullName: userItem?.name ?? userItem?.fullName ?? userItem?.username ?? "Unknown User",
+      username: userItem?.username ?? "",
+      userEmail: userItem?.email ?? userItem?.username ?? "",
+      ...userItem,
+    }));
+  };
+
+  const loadAllSessionsForUser = async (userId) => {
+    const size = 100;
+    const allSessions = [];
+    const first = await fetchUserSessions(userId, 0, size);
+    const firstBody = first?.body ?? {};
+    allSessions.push(...(firstBody?.data ?? []));
+
+    const totalPages = Number(firstBody?.totalPages ?? 1);
+    for (let page = 1; page < totalPages; page += 1) {
+      const next = await fetchUserSessions(userId, page, size);
+      allSessions.push(...(next?.body?.data ?? []));
+    }
+    return allSessions;
+  };
+
+  const handleViewDetails = async (row) => {
+    const userId = row?.userId ?? row?.id;
+    if (!userId) return row;
+
+    try {
+      console.log("[Dashboard] Eye clicked for userId:", userId);
+      const sessions = await loadAllSessionsForUser(userId);
+      console.log("[Dashboard] POST /dashboard/summary/session response:", sessions);
+      const sessionIds = sessions
+        .map((session) => session?.sessionId)
+        .filter(Boolean)
+        .map((sessionId) => String(sessionId));
+      return {
+        ...row,
+        sessionIds,
+        selectedSessionId: null,
+        attempts: null,
+        orc_data: null,
+      };
+    } catch (err) {
+      console.error("[Dashboard] /dashboard/summary/session error:", err);
+      return {
+        ...row,
+        sessionsError: getApiErrorMessage(err),
+      };
+    }
+  };
+
+  const handleSessionSelect = async (row, sessionId) => {
+    const userId = row?.userId ?? row?.id;
+    if (!userId) return row;
+    if (!sessionId || String(row?.selectedSessionId) === String(sessionId)) {
+      return {
+        ...row,
+        selectedSessionId: null,
+        attempts: null,
+        orc_data: null,
+      };
+    }
+    try {
+      console.log("[Dashboard] Session clicked:", sessionId, "for user:", userId);
+      const selectedSession = await fetchSessionDetailBySessionId(userId, sessionId);
+      if (!selectedSession) {
+        return {
+          ...row,
+          selectedSessionId: sessionId,
+          attempts: "—",
+          orc_data: "—",
+        };
+      }
+      return {
+        ...row,
+        selectedSessionId: sessionId,
+        attempts: selectedSession?.attempts ?? "—",
+        orc_data: selectedSession?.ocrData ?? selectedSession?.orc_data ?? "—",
+      };
+    } catch (err) {
+      console.error("[Dashboard] Session detail error:", err);
+      return {
+        ...row,
+        selectedSessionId: sessionId,
+        attempts: "—",
+        orc_data: "—",
+      };
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       setLoadError("");
       try {
-        const records = await loadAllDashboardRecords();
-        if (!cancelled) setAllRecords(records);
+        const users = await loadAllUsers();
+        if (!cancelled) setAllRecords(users);
       } catch (err) {
         if (!cancelled) {
-          setLoadError(err?.message || "Failed to load dashboard data");
+          setLoadError(getApiErrorMessage(err));
           setAllRecords([]);
         }
       } finally {
@@ -392,6 +504,9 @@ export default function DashboardPage({ user, onLogout }) {
                 loading={loading}
                 loadError={loadError}
                 emptyMessage={searchTerm ? "No records found matching your search" : "No records found"}
+                onViewDetails={handleViewDetails}
+                onSessionSelect={handleSessionSelect}
+                visibleColumns={TABLE_VISIBLE_COLUMNS}
               />
             </div>
           </div>

@@ -18,7 +18,6 @@ const defaultConfig = {
 /** Login/logout only — never sends stored JWT */
 export const publicApi = axios.create(defaultConfig);
 
-/** Protected dashboard APIs — always sends Bearer token when available */
 export const api = axios.create(defaultConfig);
 
 let unauthorizedHandler = null;
@@ -83,16 +82,32 @@ export async function logout() {
 }
 
 export async function fetchUserSummary(page = 0, size = 100) {
-  const { data } = await api.post('/dashboard/summary', { page, size });
+  const { data } = await api.post('/dashboard/summary', { page, size }, {
+    headers: getAuthorizationHeader(),
+  });
   return data;
 }
 
 export async function fetchUserSessions(userId, page = 0, size = 100) {
-  const { data } = await api.post('/dashboard/summary/session', { userId, page, size });
+  const { data } = await api.post('/dashboard/summary/session', { userId, page, size }, {
+    headers: getAuthorizationHeader(),
+  });
+  console.log('[API] POST /dashboard/summary/session response:', data);
   return data;
 }
 
-/** Flattened dynamic rows for dashboard table (server-paginated) */
+export async function fetchSessionDetailBySessionId(userId, sessionId) {
+  const { data } = await api.post('/dashboard/summary/session', { userId, page: 0, size: 200 }, {
+    headers: getAuthorizationHeader(),
+  });
+  const allSessions = data?.body?.data ?? [];
+  const selectedSession = allSessions.find(
+    (session) => String(session?.sessionId) === String(sessionId)
+  );
+  console.log('[API] POST /dashboard/summary/session selected session:', selectedSession);
+  return selectedSession ?? null;
+}
+
 export async function fetchDashboardRecords(page = 0, size = 10) {
   const { data } = await api.post('/dashboard/summary/records', { page, size });
   return data;
