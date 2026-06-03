@@ -28,7 +28,36 @@ export default function RowDetailsModal({ row, onSessionSelect, onClose }) {
   const handleBack = () => {
     setActiveSessionId(null);
   };
-
+  const formattedAttempts = (() => {
+    try {
+      const data = row?.attempts;
+      return typeof data === 'string'
+        ? JSON.stringify(JSON.parse(data), null, 2)
+        : JSON.stringify(data, null, 2);
+    } catch {
+      return row?.attempts || '-';
+    }
+  })();
+  
+  const formattedOcrData = (() => {
+    try {
+      const data =
+        row?.userDocumentResponse?.ocrData ||
+        row?.ocrData ||
+        row?.ocr_data;
+  
+      return typeof data === 'string'
+        ? JSON.stringify(JSON.parse(data), null, 2)
+        : JSON.stringify(data, null, 2);
+    } catch {
+      return (
+        row?.userDocumentResponse?.ocrData ||
+        row?.ocrData ||
+        row?.ocr_data ||
+        '-'
+      );
+    }
+  })();
   const renderDataCard = (title, value, isJsonLike = false) => (
     <div>
       <div
@@ -256,8 +285,8 @@ export default function RowDetailsModal({ row, onSessionSelect, onClose }) {
                   ← Back
                 </button>
                 {renderDataCard('Session ID', activeSessionId)}
-                {renderDataCard('Attempts Data', row.attempts)}
-                {renderDataCard('OCR Data', row.orc_data, true)}
+{renderDataCard('Attempts Data', formattedAttempts, true)}
+{renderDataCard('OCR Data', formattedOcrData, true)}
               </>
             )}
           </div>

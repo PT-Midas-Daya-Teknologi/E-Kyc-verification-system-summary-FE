@@ -307,7 +307,12 @@ export default function DashboardPage({ user, onLogout }) {
         ...row,
         selectedSessionId: sessionId,
         attempts: selectedSession?.attempts ?? "—",
-        orc_data: selectedSession?.ocrData ?? selectedSession?.orc_data ?? "—",
+        ocrData:
+          selectedSession?.ocrData ??
+          selectedSession?.ocr_data ??
+          "—",
+        userDocumentResponse:
+          selectedSession?.userDocumentResponse ?? null,
       };
     } catch (err) {
       console.error("[Dashboard] Session detail error:", err);
