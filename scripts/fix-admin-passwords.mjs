@@ -9,7 +9,6 @@ const client = new Client({
   user: 'postgres',
   password: 'root',
 });
-
 await client.connect();
 
 await client.query(
