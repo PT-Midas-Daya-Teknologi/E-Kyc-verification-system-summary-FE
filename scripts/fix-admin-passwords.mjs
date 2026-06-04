@@ -10,7 +10,6 @@ const client = new Client({
   password: 'root',
 });
 
-
 await client.connect();
 
 await client.query(

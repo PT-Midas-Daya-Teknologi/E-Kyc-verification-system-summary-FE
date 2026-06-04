@@ -10,6 +10,7 @@ function normalizeToken(token) {
   }
   return trimmed;
 }
+
 export function extractAccessToken(response) {
   const rawToken =
     response?.body?.accessToken ??

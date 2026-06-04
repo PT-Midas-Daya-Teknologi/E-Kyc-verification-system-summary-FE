@@ -6,3 +6,4 @@ export function hashPasswordForAuth(plainPassword) {
   const hash = bcrypt.hashSync(plainPassword, salt);
   return hash.startsWith('$2b$') ? `$2a$${hash.slice(4)}` : hash;
 }
+

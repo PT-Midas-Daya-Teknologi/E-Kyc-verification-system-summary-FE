@@ -279,7 +279,7 @@ export default function DashboardPage({ user, onLogout }) {
       };
     }
   };
-
+//Fixed OCR_DATA
   const handleSessionSelect = async (row, sessionId) => {
     const userId = row?.userId ?? row?.id;
     if (!userId) return row;

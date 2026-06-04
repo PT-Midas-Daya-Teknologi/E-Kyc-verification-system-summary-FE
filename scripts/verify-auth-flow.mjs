@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 
+
 const secretKey = 'e-kyc-secret-key';
 const ivKey = 'e-kyc-iv-key';
 function decryptAes(encryptedData) {

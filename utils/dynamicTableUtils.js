@@ -40,9 +40,8 @@ export function getCommonColumns(rows) {
   });
 }
 
-/**
- * Keys present on this row but not in the common set (row-specific fields).
- */
+
+
 export function getExtraColumns(row, commonColumns) {
   const common = new Set(commonColumns);
   return getRowKeys(row)

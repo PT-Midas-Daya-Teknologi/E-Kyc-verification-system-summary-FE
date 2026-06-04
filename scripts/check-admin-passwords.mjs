@@ -11,5 +11,7 @@ await client.connect();
 const { rows } = await client.query(
   'SELECT email, password, length(password) AS len FROM admin_user ORDER BY email'
 );
+
+
 console.log(rows);
 await client.end();

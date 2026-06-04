@@ -4,7 +4,6 @@ import { formatCellValue } from '../utils/dynamicTableUtils.js';
 
 export default function RowDetailsModal({ row, onSessionSelect, onClose }) {
   if (!row) return null;
-
   const sessionIds = Array.isArray(row.sessionIds) ? row.sessionIds : [];
   const [hoveredSessionId, setHoveredSessionId] = useState(null);
   const [activeSessionId, setActiveSessionId] = useState(row.selectedSessionId ?? null);

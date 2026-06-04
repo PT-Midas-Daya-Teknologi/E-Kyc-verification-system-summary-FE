@@ -6,7 +6,6 @@ import {
   formatColumnLabel,
 } from '../utils/dynamicTableUtils.js';
 import RowDetailsModal from './RowDetailsModal.jsx';
-
 const thStyles = {
   padding: '0.75rem 1rem',
   textAlign: 'left',
