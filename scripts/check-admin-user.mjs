@@ -7,7 +7,6 @@ const client = new pg.Client({
   user: 'postgres',
   password: 'root',
 });
-
 await client.connect();
 const { rows } = await client.query(
   'SELECT id, email, password, is_active FROM admin_user WHERE email = $1',

@@ -8,9 +8,6 @@ import { flattenSessionItems } from '../utils/dynamicTableUtils.js';
 
 const FETCH_ALL_CHUNK = 100;
 
-/**
- * Load one page of flattened dashboard rows from `/dashboard/summary/records`.
- */
 export async function loadDashboardRecordsPage(page = 0, size = 10) {
   let response;
   try {
@@ -32,9 +29,6 @@ export async function loadDashboardRecordsPage(page = 0, size = 10) {
   };
 }
 
-/**
- * Load every flattened row (for client-side search across the full dataset).
- */
 export async function loadAllDashboardRecords() {
   const first = await loadDashboardRecordsPage(0, FETCH_ALL_CHUNK);
   let allRows = [...first.rows];
