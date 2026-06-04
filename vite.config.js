@@ -15,21 +15,5 @@ export default defineConfig({
   },
   server: {
     port: 3001,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8081',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '/openapi/dev'),
-        configure: (proxy) => {
-          proxy.on('proxyReq', (proxyReq, req) => {
-            const auth = req.headers.authorization;
-            if (auth) {
-              proxyReq.setHeader('Authorization', auth);
-            }
-          });
-        },
-      },
-    },
   },
 });
