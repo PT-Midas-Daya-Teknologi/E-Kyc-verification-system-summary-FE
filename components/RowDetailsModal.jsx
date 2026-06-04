@@ -9,7 +9,7 @@ export default function RowDetailsModal({ row, onSessionSelect, onClose }) {
   const [hoveredSessionId, setHoveredSessionId] = useState(null);
   const [activeSessionId, setActiveSessionId] = useState(row.selectedSessionId ?? null);
   const [loadingSessionId, setLoadingSessionId] = useState(null);
-
+//
   const showSessionDetailView = useMemo(
     () => Boolean(activeSessionId && String(row.selectedSessionId) === String(activeSessionId)),
     [activeSessionId, row.selectedSessionId]

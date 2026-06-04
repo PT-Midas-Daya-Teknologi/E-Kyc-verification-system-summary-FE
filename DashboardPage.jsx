@@ -11,7 +11,6 @@ import {
   logout as logoutApi,
 } from "./services/api.js";
 import { clearSession } from "./services/authStorage.js";
-
 const PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
 const TABLE_VISIBLE_COLUMNS = ["fullName", "username", "userEmail"];
 

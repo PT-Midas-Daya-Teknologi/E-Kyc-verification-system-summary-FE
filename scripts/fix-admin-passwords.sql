@@ -5,6 +5,7 @@ UPDATE admin_user
 SET password = 'e8jBc+DkeaKweAtibTzxVImeZdRSoULY', updated_by = 'SYSTEM'
 WHERE email = 'admin@example.com';
 
+
 UPDATE admin_user
 SET password = 'as3fafm6OfXaUtnp7vLERO2OvUj2RD6o', updated_by = 'SYSTEM'
 WHERE email = 'admin@admin.com';

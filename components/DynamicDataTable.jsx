@@ -66,7 +66,7 @@ export default function DynamicDataTable({
       setSelectedExtras(getExtraColumns(updated));
     }
   };
-
+//
   const colSpan = displayColumns.length + 1;
 
   return (

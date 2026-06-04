@@ -15,7 +15,6 @@ const defaultConfig = {
   withCredentials: true,
 };
 
-/** Login/logout only — never sends stored JWT */
 export const publicApi = axios.create(defaultConfig);
 
 export const api = axios.create(defaultConfig);

@@ -19,7 +19,6 @@ export default function App() {
       setUser(null);
     });
   }, []);
-
   useEffect(() => {
     const token = getAccessToken();
     const storedUser = getStoredUser();

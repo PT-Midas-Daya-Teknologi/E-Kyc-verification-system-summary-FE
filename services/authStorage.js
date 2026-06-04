@@ -10,7 +10,6 @@ function normalizeToken(token) {
   }
   return trimmed;
 }
-
 export function extractAccessToken(response) {
   const rawToken =
     response?.body?.accessToken ??
@@ -28,7 +27,6 @@ export function getAccessToken() {
   memoryToken = normalizeToken(stored);
   return memoryToken;
 }
-
 export function setAccessToken(token) {
   memoryToken = normalizeToken(token);
   if (memoryToken) {

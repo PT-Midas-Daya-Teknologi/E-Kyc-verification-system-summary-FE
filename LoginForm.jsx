@@ -3,7 +3,6 @@ import { ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { applyAccessTokenToClient, authenticate, getApiErrorMessage } from './services/api.js';
 import { clearSession, extractAccessToken, setSession } from './services/authStorage.js';
-
 export default function LoginForm({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');

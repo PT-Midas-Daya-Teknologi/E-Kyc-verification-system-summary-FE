@@ -6,7 +6,6 @@ function hashPasswordForAuth(plainPassword) {
   const hash = bcrypt.hashSync(plainPassword, salt);
   return hash.startsWith('$2b$') ? `$2a$${hash.slice(4)}` : hash;
 }
-
 const base = 'http://localhost:8081/openapi/dev';
 const password = hashPasswordForAuth('admin123');
 const login = await axios.post(`${base}/authenticate`, {
@@ -16,7 +15,6 @@ const login = await axios.post(`${base}/authenticate`, {
 
 const token = login.data.body.accessToken;
 console.log('login ok, token length:', token.length);
-
 const summary = await axios.post(
   `${base}/dashboard/summary`,
   { page: 0, size: 10 },

@@ -1,3 +1,4 @@
+
 # E-KYC Verification Frontend
 
 A Vite-powered React frontend for the KYC liveness verification flow.
@@ -19,9 +20,9 @@ If you want to override the backend origin, set `VITE_API_BASE_URL` in a `.env` 
 
 ## Available scripts
 
-- `npm run dev` — start the Vite development server
-- `npm run build` — build the production bundle
-- `npm run preview` — preview the production build locally
+- `npm run dev` ï¿½ start the Vite development server
+- `npm run build` ï¿½ build the production bundle
+- `npm run preview` ï¿½ preview the production build locally
 
 ## Notes
 

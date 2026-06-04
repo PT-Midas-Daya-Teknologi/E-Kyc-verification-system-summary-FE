@@ -14,7 +14,6 @@ const PREFERRED_COLUMN_ORDER = [
   'documentId',
   'videoId',
 ];
-
 function preferredIndex(key) {
   const idx = PREFERRED_COLUMN_ORDER.indexOf(key);
   return idx === -1 ? PREFERRED_COLUMN_ORDER.length + key.charCodeAt(0) : idx;
