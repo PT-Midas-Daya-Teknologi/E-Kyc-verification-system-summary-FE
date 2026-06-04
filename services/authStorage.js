@@ -57,7 +57,6 @@ export function clearSession() {
   localStorage.removeItem(AUTH_STORAGE_KEY);
   localStorage.removeItem(USER_STORAGE_KEY);
 }
-
 export function getAuthorizationHeader() {
   const token = getAccessToken();
   return token ? { Authorization: `Bearer ${token}` } : {};

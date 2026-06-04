@@ -514,7 +514,6 @@ export default function DashboardPage({ user, onLogout }) {
               />
             </div>
           </div>
-
           {/* Enhanced Pagination Footer */}
           <div style={{ marginTop: "0.4rem", marginLeft: "0", marginRight: "0", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
