@@ -1,7 +1,6 @@
 /** Keys always rendered in the details panel / modal, not as primary table columns when sparse */
 const META_ONLY_KEYS = new Set(['userId']);
 
-/** Preferred column order when keys are shared across rows */
 const PREFERRED_COLUMN_ORDER = [
   'userName',
   'userEmail',

@@ -8,7 +8,6 @@ import {
   setAccessToken,
 } from './authStorage.js';
 import { hashPasswordForAuth } from './passwordCrypto.js';
-
 const defaultConfig = {
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },

@@ -48,7 +48,6 @@ const users = [
     ],
   },
 ];
-
 const allRecords = users.flatMap((user) =>
   user.sessions.flatMap((session) =>
     session.attempts.map((attempt, idx) => ({

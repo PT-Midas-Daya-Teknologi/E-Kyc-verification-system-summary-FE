@@ -11,7 +11,6 @@ export default function RowDetailsModal({ row, extraColumns, onClose }) {
     ...allKeys.filter((k) => !extraSet.has(k)),
     ...allKeys.filter((k) => extraSet.has(k)),
   ];
-
   const title = row.userName ?? row.sessionId ?? 'Record details';
 
   return (
