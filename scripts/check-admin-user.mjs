@@ -12,5 +12,6 @@ const { rows } = await client.query(
   'SELECT id, email, password, is_active FROM admin_user WHERE email = $1',
   ['admin@admin.com']
 );
+
 console.log(rows);
 await client.end();

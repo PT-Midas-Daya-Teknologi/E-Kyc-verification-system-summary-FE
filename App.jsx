@@ -8,6 +8,7 @@ import {
 } from './services/authStorage.js';
 import { applyAccessTokenToClient, setUnauthorizedHandler } from './services/api.js';
 
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [bootstrapping, setBootstrapping] = useState(true);

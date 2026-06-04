@@ -29,25 +29,51 @@ export default function DynamicDataTable({
   loading,
   loadError,
   emptyMessage = 'No records found',
+  onViewDetails,
+  onSessionSelect,
+  visibleColumns,
 }) {
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedExtras, setSelectedExtras] = useState([]);
+  const [detailsLoadingKey, setDetailsLoadingKey] = useState(null);
 
   const { commonColumns, getExtraColumns } = useMemo(() => analyzeTable(rows), [rows]);
+  const displayColumns = useMemo(() => {
+    if (!Array.isArray(visibleColumns) || visibleColumns.length === 0) {
+      return commonColumns;
+    }
+    return visibleColumns.filter((key) => commonColumns.includes(key));
+  }, [commonColumns, visibleColumns]);
 
-  const openDetails = (row) => {
-    setSelectedRow(row);
-    setSelectedExtras(getExtraColumns(row));
+  const openDetails = async (row) => {
+    const rowKey = row._rowKey ?? row.sessionId ?? row.userId ?? 'row';
+    setDetailsLoadingKey(rowKey);
+    try {
+      const resolvedRow = (await onViewDetails?.(row)) ?? row;
+      setSelectedRow(resolvedRow);
+      setSelectedExtras(getExtraColumns(resolvedRow));
+    } finally {
+      setDetailsLoadingKey(null);
+    }
   };
 
-  const colSpan = commonColumns.length + 1;
+  const handleSessionSelect = async (sessionId) => {
+    if (!selectedRow) return;
+    const updated = await onSessionSelect?.(selectedRow, sessionId);
+    if (updated) {
+      setSelectedRow(updated);
+      setSelectedExtras(getExtraColumns(updated));
+    }
+  };
+//
+  const colSpan = displayColumns.length + 1;
 
   return (
     <>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead style={{ background: '#f0f9ff', borderBottom: '1.5px solid #e2e8f0' }}>
           <tr>
-            {commonColumns.map((col) => (
+            {displayColumns.map((col) => (
               <th key={col} style={thStyles}>
                 {formatColumnLabel(col)}
               </th>
@@ -87,12 +113,12 @@ export default function DynamicDataTable({
                     e.currentTarget.style.background = 'transparent';
                   }}
                 >
-                  {commonColumns.map((col) => (
+                  {displayColumns.map((col) => (
                     <td key={col} style={tdStyles}>
-                      {col === 'userName' && row.userName ? (
+                      {(col === 'fullName' || col === 'userName') && (row.fullName || row.userName) ? (
                         <div>
-                          <div style={{ fontWeight: 600 }}>{formatCellValue(row.userName)}</div>
-                          {!commonColumns.includes('userEmail') && row.userEmail && (
+                          <div style={{ fontWeight: 600 }}>{formatCellValue(row.fullName ?? row.userName)}</div>
+                          {!displayColumns.includes('userEmail') && row.userEmail && (
                             <div style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.1rem' }}>
                               {formatCellValue(row.userEmail)}
                             </div>
@@ -108,6 +134,7 @@ export default function DynamicDataTable({
                       type="button"
                       title="View all fields"
                       onClick={() => openDetails(row)}
+                      disabled={detailsLoadingKey === (row._rowKey ?? row.sessionId ?? row.userId ?? 'row')}
                       style={{
                         width: '40px',
                         height: '40px',
@@ -119,6 +146,8 @@ export default function DynamicDataTable({
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
+                        opacity:
+                          detailsLoadingKey === (row._rowKey ?? row.sessionId ?? row.userId ?? 'row') ? 0.7 : 1,
                       }}
                     >
                       <Eye size={20} />
@@ -140,6 +169,7 @@ export default function DynamicDataTable({
         <RowDetailsModal
           row={selectedRow}
           extraColumns={selectedExtras}
+          onSessionSelect={handleSessionSelect}
           onClose={() => {
             setSelectedRow(null);
             setSelectedExtras([]);

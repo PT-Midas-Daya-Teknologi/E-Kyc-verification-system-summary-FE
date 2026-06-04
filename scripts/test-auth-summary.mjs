@@ -13,9 +13,9 @@ const login = await axios.post(`${base}/authenticate`, {
   password,
 }, { withCredentials: true });
 
+
 const token = login.data.body.accessToken;
 console.log('login ok, token length:', token.length);
-
 const summary = await axios.post(
   `${base}/dashboard/summary`,
   { page: 0, size: 10 },
