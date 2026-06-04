@@ -1,17 +1,94 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { FileJson } from 'lucide-react';
-import { formatCellValue, formatColumnLabel, getRowKeys } from '../utils/dynamicTableUtils.js';
+import { formatCellValue } from '../utils/dynamicTableUtils.js';
 
-export default function RowDetailsModal({ row, extraColumns, onClose }) {
+export default function RowDetailsModal({ row, onSessionSelect, onClose }) {
   if (!row) return null;
+  const sessionIds = Array.isArray(row.sessionIds) ? row.sessionIds : [];
+  const [hoveredSessionId, setHoveredSessionId] = useState(null);
+  const [activeSessionId, setActiveSessionId] = useState(row.selectedSessionId ?? null);
+  const [loadingSessionId, setLoadingSessionId] = useState(null);
+//
+  const showSessionDetailView = useMemo(
+    () => Boolean(activeSessionId && String(row.selectedSessionId) === String(activeSessionId)),
+    [activeSessionId, row.selectedSessionId]
+  );
 
-  const allKeys = getRowKeys(row);
-  const extraSet = new Set(extraColumns ?? []);
-  const orderedKeys = [
-    ...allKeys.filter((k) => !extraSet.has(k)),
-    ...allKeys.filter((k) => extraSet.has(k)),
-  ];
-  const title = row.userName ?? row.sessionId ?? 'Record details';
+  const handleViewDetails = async (sessionId) => {
+    setLoadingSessionId(sessionId);
+    try {
+      await onSessionSelect?.(sessionId);
+      setActiveSessionId(sessionId);
+    } finally {
+      setLoadingSessionId(null);
+    }
+  };
+
+  const handleBack = () => {
+    setActiveSessionId(null);
+  };
+  const formattedAttempts = (() => {
+    try {
+      const data = row?.attempts;
+      return typeof data === 'string'
+        ? JSON.stringify(JSON.parse(data), null, 2)
+        : JSON.stringify(data, null, 2);
+    } catch {
+      return row?.attempts || '-';
+    }
+  })();
+  
+  const formattedOcrData = (() => {
+    try {
+      const data =
+        row?.userDocumentResponse?.ocrData ||
+        row?.ocrData ||
+        row?.ocr_data;
+  
+      return typeof data === 'string'
+        ? JSON.stringify(JSON.parse(data), null, 2)
+        : JSON.stringify(data, null, 2);
+    } catch {
+      return (
+        row?.userDocumentResponse?.ocrData ||
+        row?.ocrData ||
+        row?.ocr_data ||
+        '-'
+      );
+    }
+  })();
+  const renderDataCard = (title, value, isJsonLike = false) => (
+    <div>
+      <div
+        style={{
+          fontSize: '0.72rem',
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          color: '#0369a1',
+          letterSpacing: '0.04em',
+          marginBottom: '0.4rem',
+        }}
+      >
+        {title}
+      </div>
+      <div
+        style={{
+          background: 'linear-gradient(180deg, rgba(14, 165, 233, 0.1), rgba(37, 99, 235, 0.08))',
+          border: '1px solid rgba(14, 165, 233, 0.28)',
+          borderRadius: '0.65rem',
+          padding: '0.75rem 0.85rem',
+          color: '#0f172a',
+          fontSize: '0.86rem',
+          fontFamily: isJsonLike ? 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace' : 'inherit',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+          lineHeight: 1.5,
+        }}
+      >
+        {formatCellValue(value)}
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -71,13 +148,8 @@ export default function RowDetailsModal({ row, extraColumns, onClose }) {
             </div>
             <div>
               <h2 id="row-details-title" style={{ margin: 0, color: 'white', fontSize: '1.25rem' }}>
-                {title}
+                Session Details
               </h2>
-              {row.sessionId && (
-                <p style={{ margin: '0.15rem 0 0', color: 'rgba(255,255,255,0.9)', fontSize: '0.75rem' }}>
-                  Session: {row.sessionId}
-                </p>
-              )}
             </div>
           </div>
           <button
@@ -100,55 +172,122 @@ export default function RowDetailsModal({ row, extraColumns, onClose }) {
         </div>
 
         <div style={{ padding: '1.25rem 1.5rem', overflowY: 'auto', flex: 1 }}>
-          {extraColumns?.length > 0 && (
-            <p
-              style={{
-                margin: '0 0 1rem',
-                padding: '0.5rem 0.75rem',
-                background: 'rgba(245, 158, 11, 0.12)',
-                border: '1px solid rgba(245, 158, 11, 0.35)',
-                borderRadius: '0.5rem',
-                color: '#92400e',
-                fontSize: '0.85rem',
-              }}
-            >
-              Row-specific fields: {extraColumns.map(formatColumnLabel).join(', ')}
-            </p>
-          )}
-
           <div style={{ display: 'grid', gap: '0.75rem' }}>
-            {orderedKeys.map((key) => (
-              <div key={key}>
+            {!showSessionDetailView ? (
+              <div>
                 <div
                   style={{
-                    fontSize: '0.7rem',
+                    fontSize: '0.72rem',
                     fontWeight: 700,
                     textTransform: 'uppercase',
-                    color: extraSet.has(key) ? '#b45309' : '#0369a1',
+                    color: '#0369a1',
                     letterSpacing: '0.04em',
-                    marginBottom: '0.25rem',
+                    marginBottom: '0.55rem',
                   }}
                 >
-                  {formatColumnLabel(key)}
-                  {extraSet.has(key) ? ' (row-specific)' : ''}
+                  Session IDs
                 </div>
-                <div
-                  style={{
-                    background: 'rgba(14, 165, 233, 0.08)',
-                    border: '1.5px solid rgba(14, 165, 233, 0.25)',
-                    borderRadius: '0.5rem',
-                    padding: '0.65rem 0.75rem',
-                    color: '#0f172a',
-                    fontFamily: key === 'ocrData' ? 'monospace' : 'inherit',
-                    fontSize: '0.875rem',
-                    wordBreak: 'break-word',
-                    whiteSpace: 'pre-wrap',
-                  }}
-                >
-                  {formatCellValue(row[key])}
-                </div>
+                {sessionIds.length === 0 ? (
+                  <div
+                    style={{
+                      background: 'rgba(14, 165, 233, 0.08)',
+                      border: '1.5px solid rgba(14, 165, 233, 0.25)',
+                      borderRadius: '0.6rem',
+                      padding: '0.75rem 0.85rem',
+                      color: '#0f172a',
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    No sessions found
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gap: '0.6rem' }}>
+                    {sessionIds.map((sessionId) => {
+                      const isHovered = hoveredSessionId === sessionId;
+                      const isLoading = loadingSessionId === sessionId;
+                      return (
+                        <div
+                          key={sessionId}
+                          onMouseEnter={() => setHoveredSessionId(sessionId)}
+                          onMouseLeave={() => setHoveredSessionId(null)}
+                          style={{
+                            width: '100%',
+                            borderRadius: '0.65rem',
+                            border: '1.5px solid rgba(14, 165, 233, 0.25)',
+                            background: isHovered ? 'rgba(14, 165, 233, 0.12)' : 'rgba(14, 165, 233, 0.08)',
+                            padding: '0.65rem 0.75rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '0.75rem',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          <div
+                            style={{
+                              flex: 1,
+                              minWidth: 0,
+                              fontSize: '0.82rem',
+                              color: '#0f172a',
+                              wordBreak: 'break-all',
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {sessionId}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleViewDetails(sessionId)}
+                            style={{
+                              opacity: isHovered || isLoading ? 1 : 0,
+                              transform: isHovered || isLoading ? 'translateX(0)' : 'translateX(8px)',
+                              pointerEvents: isHovered || isLoading ? 'auto' : 'none',
+                              transition: 'all 0.2s ease',
+                              border: '1px solid rgba(37, 99, 235, 0.45)',
+                              background: 'linear-gradient(135deg, rgba(14,165,233,0.2), rgba(37,99,235,0.22))',
+                              color: '#0f172a',
+                              borderRadius: '0.5rem',
+                              padding: '0.4rem 0.65rem',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              cursor: isLoading ? 'wait' : 'pointer',
+                              whiteSpace: 'nowrap',
+                            }}
+                            disabled={isLoading}
+                          >
+                            {isLoading ? 'Loading...' : 'View Details'}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            ))}
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  style={{
+                    justifySelf: 'start',
+                    border: '1px solid rgba(14, 165, 233, 0.35)',
+                    background: 'rgba(14, 165, 233, 0.08)',
+                    color: '#0369a1',
+                    borderRadius: '0.5rem',
+                    padding: '0.42rem 0.65rem',
+                    fontWeight: 700,
+                    fontSize: '0.76rem',
+                    cursor: 'pointer',
+                    width: 'fit-content',
+                  }}
+                >
+                  ← Back
+                </button>
+                {renderDataCard('Session ID', activeSessionId)}
+{renderDataCard('Attempts Data', formattedAttempts, true)}
+{renderDataCard('OCR Data', formattedOcrData, true)}
+              </>
+            )}
           </div>
         </div>
       </div>

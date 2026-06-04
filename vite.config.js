@@ -1,3 +1,4 @@
+
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -27,6 +28,14 @@ export default defineConfig({
             if (auth) {
               proxyReq.setHeader('Authorization', auth);
             }
+          });
+          proxy.on('proxyRes', (proxyRes) => {
+            const setCookie = proxyRes.headers['set-cookie'];
+            if (!Array.isArray(setCookie) || setCookie.length === 0) return;
+
+            proxyRes.headers['set-cookie'] = setCookie.map((cookie) =>
+              cookie.replace(/Path=\/openapi\/dev/gi, 'Path=/api')
+            );
           });
         },
       },

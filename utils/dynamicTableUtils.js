@@ -1,4 +1,3 @@
-/** Keys always rendered in the details panel / modal, not as primary table columns when sparse */
 const META_ONLY_KEYS = new Set(['userId']);
 
 const PREFERRED_COLUMN_ORDER = [
@@ -15,7 +14,6 @@ const PREFERRED_COLUMN_ORDER = [
   'documentId',
   'videoId',
 ];
-
 function preferredIndex(key) {
   const idx = PREFERRED_COLUMN_ORDER.indexOf(key);
   return idx === -1 ? PREFERRED_COLUMN_ORDER.length + key.charCodeAt(0) : idx;
@@ -42,9 +40,8 @@ export function getCommonColumns(rows) {
   });
 }
 
-/**
- * Keys present on this row but not in the common set (row-specific fields).
- */
+
+
 export function getExtraColumns(row, commonColumns) {
   const common = new Set(commonColumns);
   return getRowKeys(row)

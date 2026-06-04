@@ -6,8 +6,8 @@ import {
 } from './api.js';
 import { flattenSessionItems } from '../utils/dynamicTableUtils.js';
 
-const FETCH_ALL_CHUNK = 100;
 
+const FETCH_ALL_CHUNK = 100;
 export async function loadDashboardRecordsPage(page = 0, size = 10) {
   let response;
   try {
