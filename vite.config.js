@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -15,30 +14,6 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3001,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8081',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '/openapi/dev'),
-        configure: (proxy) => {
-          proxy.on('proxyReq', (proxyReq, req) => {
-            const auth = req.headers.authorization;
-            if (auth) {
-              proxyReq.setHeader('Authorization', auth);
-            }
-          });
-          proxy.on('proxyRes', (proxyRes) => {
-            const setCookie = proxyRes.headers['set-cookie'];
-            if (!Array.isArray(setCookie) || setCookie.length === 0) return;
-
-            proxyRes.headers['set-cookie'] = setCookie.map((cookie) =>
-              cookie.replace(/Path=\/openapi\/dev/gi, 'Path=/api')
-            );
-          });
-        },
-      },
-    },
+    port: 3001
   },
 });
