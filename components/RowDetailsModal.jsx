@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { FileJson } from 'lucide-react';
+import { FileJson, Download, AlertCircle } from 'lucide-react';
 import { formatCellValue } from '../utils/dynamicTableUtils.js';
+import { api, getApiErrorMessage } from '../services/api.js';
 
 export default function RowDetailsModal({ row, onSessionSelect, onClose }) {
   if (!row) return null;
@@ -8,6 +9,8 @@ export default function RowDetailsModal({ row, onSessionSelect, onClose }) {
   const [hoveredSessionId, setHoveredSessionId] = useState(null);
   const [activeSessionId, setActiveSessionId] = useState(row.selectedSessionId ?? null);
   const [loadingSessionId, setLoadingSessionId] = useState(null);
+  const [downloadingDocId, setDownloadingDocId] = useState(null);
+  const [downloadError, setDownloadError] = useState(null);
 //
   const showSessionDetailView = useMemo(
     () => Boolean(activeSessionId && String(row.selectedSessionId) === String(activeSessionId)),
@@ -26,6 +29,32 @@ export default function RowDetailsModal({ row, onSessionSelect, onClose }) {
 
   const handleBack = () => {
     setActiveSessionId(null);
+  };
+
+  const handleDownloadDocument = async (documentId, documentName) => {
+    setDownloadingDocId(documentId);
+    setDownloadError(null);
+    try {
+      const response = await api.post('/dashboard/document', { documentId }, {
+        responseType: 'blob',
+      });
+
+      // Create a blob URL and trigger download
+      const blob = new Blob([response.data]);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = documentName || `document-${documentId}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      setDownloadError(getApiErrorMessage(error) || 'Failed to download document');
+    } finally {
+      setDownloadingDocId(null);
+    }
   };
   const formattedAttempts = (() => {
     try {
@@ -89,6 +118,98 @@ export default function RowDetailsModal({ row, onSessionSelect, onClose }) {
       </div>
     </div>
   );
+
+  const renderDocumentCard = () => {
+    const document = row?.userDocumentResponse;
+    if (!document || !document.documentId) return null;
+
+    const isDownloading = downloadingDocId === document.documentId;
+
+    return (
+      <div>
+        <div
+          style={{
+            fontSize: '0.72rem',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            color: '#0369a1',
+            letterSpacing: '0.04em',
+            marginBottom: '0.4rem',
+          }}
+        >
+          Document
+        </div>
+        <div
+          style={{
+            background: 'linear-gradient(180deg, rgba(14, 165, 233, 0.1), rgba(37, 99, 235, 0.08))',
+            border: '1px solid rgba(14, 165, 233, 0.28)',
+            borderRadius: '0.65rem',
+            padding: '0.75rem 0.85rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.75rem',
+          }}
+        >
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              fontSize: '0.86rem',
+              color: '#0f172a',
+              wordBreak: 'break-word',
+            }}
+          >
+            {document.documentName || `Document ${document.documentId}`}
+          </div>
+          <button
+            type="button"
+            onClick={() => handleDownloadDocument(document.documentId, document.documentName)}
+            disabled={isDownloading}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem',
+              border: '1px solid rgba(37, 99, 235, 0.45)',
+              background: isDownloading ? 'rgba(37, 99, 235, 0.15)' : 'linear-gradient(135deg, rgba(14,165,233,0.2), rgba(37,99,235,0.22))',
+              color: '#0f172a',
+              borderRadius: '0.5rem',
+              padding: '0.4rem 0.65rem',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              cursor: isDownloading ? 'wait' : 'pointer',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.2s ease',
+              opacity: isDownloading ? 0.7 : 1,
+            }}
+          >
+            <Download size={14} />
+            {isDownloading ? 'Downloading...' : 'Download'}
+          </button>
+        </div>
+        {downloadError && (
+          <div
+            style={{
+              marginTop: '0.5rem',
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '0.5rem',
+              padding: '0.5rem 0.75rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.75rem',
+              color: '#dc2626',
+            }}
+          >
+            <AlertCircle size={14} />
+            {downloadError}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div
@@ -284,8 +405,9 @@ export default function RowDetailsModal({ row, onSessionSelect, onClose }) {
                   ← Back
                 </button>
                 {renderDataCard('Session ID', activeSessionId)}
-{renderDataCard('Attempts Data', formattedAttempts, true)}
-{renderDataCard('OCR Data', formattedOcrData, true)}
+                {renderDocumentCard()}
+                {renderDataCard('Attempts Data', formattedAttempts, true)}
+                {renderDataCard('OCR Data', formattedOcrData, true)}
               </>
             )}
           </div>
