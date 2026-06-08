@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { FileJson, Download, AlertCircle } from 'lucide-react';
 import { formatCellValue } from '../utils/dynamicTableUtils.js';
 import { api, getApiErrorMessage } from '../services/api.js';
+import VideoViewer from './VideoViewer.jsx';
 
 export default function RowDetailsModal({ row, onSessionSelect, onClose }) {
   if (!row) return null;
@@ -406,6 +407,13 @@ export default function RowDetailsModal({ row, onSessionSelect, onClose }) {
                 </button>
                 {renderDataCard('Session ID', activeSessionId)}
                 {renderDocumentCard()}
+                {row?.userVideoResponse?.videoId && (
+                  <VideoViewer 
+                    videoId={row.userVideoResponse.videoId}
+                    videoName={row.userVideoResponse.videoName || 'Session Video'}
+                    onClose={() => {}}
+                  />
+                )}
                 {renderDataCard('Attempts Data', formattedAttempts, true)}
                 {renderDataCard('OCR Data', formattedOcrData, true)}
               </>
