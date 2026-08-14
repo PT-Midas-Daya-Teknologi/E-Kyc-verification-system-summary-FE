@@ -99,6 +99,7 @@ export default function SessionDetailsPage({ session, onBack }) {
   const [videoLoading, setVideoLoading] = useState(false);
   const [videoError, setVideoError] = useState(null);
   const [audioPath, setAudioPath] = useState(null);
+  const [audioFileName, setAudioFileName] = useState(null);
   const [audioLoading, setAudioLoading] = useState(false);
   const [audioError, setAudioError] = useState(null);
   const [documentPreviewUrl, setDocumentPreviewUrl] = useState(null);
@@ -238,6 +239,9 @@ export default function SessionDetailsPage({ session, onBack }) {
       if (!nextAudioPath) {
         throw new Error('Audio path not found');
       }
+
+      const fileName = nextAudioPath.split(/[\\\/]/).pop() || 'Session Audio';
+      setAudioFileName(fileName);
 
       const fileResponse = await api.post('/dashboard/audio/file', { videoId }, { responseType: 'arraybuffer' });
       const contentType = fileResponse.headers?.['content-type'] || fileResponse.headers?.['Content-Type'] || 'audio/ogg';
@@ -393,7 +397,7 @@ export default function SessionDetailsPage({ session, onBack }) {
               <div style={{ ...valueBoxStyles, display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <div style={{ color: '#0f172a', fontSize: '0.88rem' }}>
-                    {session?.userVideoResponse?.videoName || 'Session Audio'}
+                    {audioFileName || 'Session Audio'}
                   </div>
                   <button
                     type="button"
