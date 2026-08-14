@@ -405,7 +405,9 @@ export default function RowDetailsModal({ row, onSessionSelect, onClose }) {
                 >
                   ← Back
                 </button>
-                {renderDataCard('Session ID', activeSessionId)}
+                {renderDataCard('Session Name', row?.sessionName || row?.session_name || '-')}
+                {renderDataCard('Status', row?.status || '-')}
+                {renderDataCard('Reason', row?.reason || '-')}
                 {renderDocumentCard()}
                 {row?.userVideoResponse?.videoId && (
                   <VideoViewer 

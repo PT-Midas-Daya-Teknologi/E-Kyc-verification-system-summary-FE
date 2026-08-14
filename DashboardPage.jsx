@@ -206,7 +206,7 @@ const trHoverStyles = {
   transition: "all 0.2s ease",
 };
 
-export default function DashboardPage({ user, onLogout }) {
+export default function DashboardPage({ user, onLogout, onOpenSessionList }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -257,29 +257,32 @@ export default function DashboardPage({ user, onLogout }) {
     if (!userId) return row;
 
     try {
-      console.log("[Dashboard] Eye clicked for userId:", userId);
       const sessions = await loadAllSessionsForUser(userId);
-      console.log("[Dashboard] POST /dashboard/summary/session response:", sessions);
-      const sessionIds = sessions
-        .map((session) => session?.sessionId)
-        .filter(Boolean)
-        .map((sessionId) => String(sessionId));
-      return {
+      const nextRow = {
         ...row,
-        sessionIds,
+        userId,
+        sessionIds: (sessions || [])
+          .map((session) => session?.sessionId)
+          .filter(Boolean)
+          .map((sessionId) => String(sessionId)),
         selectedSessionId: null,
         attempts: null,
         orc_data: null,
+        sessions,
       };
+      onOpenSessionList?.(nextRow);
+      return nextRow;
     } catch (err) {
       console.error("[Dashboard] /dashboard/summary/session error:", err);
-      return {
+      const fallbackRow = {
         ...row,
         sessionsError: getApiErrorMessage(err),
       };
+      onOpenSessionList?.(fallbackRow);
+      return fallbackRow;
     }
   };
-//Fixed OCR_DATA
+
   const handleSessionSelect = async (row, sessionId) => {
     const userId = row?.userId ?? row?.id;
     if (!userId) return row;
@@ -509,7 +512,6 @@ export default function DashboardPage({ user, onLogout }) {
                 loadError={loadError}
                 emptyMessage={searchTerm ? "No records found matching your search" : "No records found"}
                 onViewDetails={handleViewDetails}
-                onSessionSelect={handleSessionSelect}
                 visibleColumns={TABLE_VISIBLE_COLUMNS}
               />
             </div>

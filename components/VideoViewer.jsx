@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Eye, EyeOff, AlertCircle, Loader } from 'lucide-react';
+import { api } from '../services/api.js';
 
 export default function VideoViewer({ videoId, videoName, onClose }) {
   const [isVisible, setIsVisible] = useState(false);
@@ -18,19 +19,9 @@ export default function VideoViewer({ videoId, videoName, onClose }) {
     setError(null);
 
     try {
-      const response = await fetch('/openapi/dev/dashboard/video', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ videoId }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const blob = await response.blob();
+      const response = await api.post('/dashboard/video/file', { videoId }, { responseType: 'arraybuffer' });
+      const contentType = response.headers?.['content-type'] || response.headers?.['Content-Type'] || 'video/mp4';
+      const blob = new Blob([response.data], { type: contentType });
       const url = window.URL.createObjectURL(blob);
       setVideoUrl(url);
       setIsVisible(true);
