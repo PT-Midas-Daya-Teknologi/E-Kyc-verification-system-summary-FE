@@ -5,7 +5,7 @@ import {
   formatCellValue,
   formatColumnLabel,
 } from '../utils/dynamicTableUtils.js';
-import RowDetailsModal from './RowDetailsModal.jsx';
+
 const thStyles = {
   padding: '0.75rem 1rem',
   textAlign: 'left',
@@ -30,11 +30,8 @@ export default function DynamicDataTable({
   loadError,
   emptyMessage = 'No records found',
   onViewDetails,
-  onSessionSelect,
   visibleColumns,
 }) {
-  const [selectedRow, setSelectedRow] = useState(null);
-  const [selectedExtras, setSelectedExtras] = useState([]);
   const [detailsLoadingKey, setDetailsLoadingKey] = useState(null);
 
   const { commonColumns, getExtraColumns } = useMemo(() => analyzeTable(rows), [rows]);
@@ -49,23 +46,12 @@ export default function DynamicDataTable({
     const rowKey = row._rowKey ?? row.sessionId ?? row.userId ?? 'row';
     setDetailsLoadingKey(rowKey);
     try {
-      const resolvedRow = (await onViewDetails?.(row)) ?? row;
-      setSelectedRow(resolvedRow);
-      setSelectedExtras(getExtraColumns(resolvedRow));
+      await onViewDetails?.(row);
     } finally {
       setDetailsLoadingKey(null);
     }
   };
 
-  const handleSessionSelect = async (sessionId) => {
-    if (!selectedRow) return;
-    const updated = await onSessionSelect?.(selectedRow, sessionId);
-    if (updated) {
-      setSelectedRow(updated);
-      setSelectedExtras(getExtraColumns(updated));
-    }
-  };
-//
   const colSpan = displayColumns.length + 1;
 
   return (
@@ -165,17 +151,6 @@ export default function DynamicDataTable({
         </tbody>
       </table>
 
-      {selectedRow && (
-        <RowDetailsModal
-          row={selectedRow}
-          extraColumns={selectedExtras}
-          onSessionSelect={handleSessionSelect}
-          onClose={() => {
-            setSelectedRow(null);
-            setSelectedExtras([]);
-          }}
-        />
-      )}
     </>
   );
 }
