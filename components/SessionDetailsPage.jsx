@@ -85,12 +85,29 @@ function formatValue(value) {
   return String(value);
 }
 
+function formatSessionTimestamp(value) {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return formatValue(value);
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map(({ type, value: partValue }) => [type, partValue]));
+  return `${values.day} ${values.month} ${values.year} ${values.hour}:${values.minute}`;
+}
+
 function getDisplayValue(session, key) {
   if (key === 'status') {
     if (session?.status != null && session.status !== '') return formatValue(session.status);
     if (typeof session?.isActive === 'boolean') return session.isActive ? 'Active' : 'Inactive';
     return '—';
   }
+  if (key === 'createdAt' || key === 'updatedAt') return formatSessionTimestamp(session?.[key]);
   return formatValue(session?.[key]);
 }
 
@@ -112,6 +129,8 @@ export default function SessionDetailsPage({ session, onBack }) {
       ['Session Name', 'sessionName'],
       ['Status', 'status'],
       ['Reason', 'reason'],
+      ['Created At', 'createdAt'],
+      ['Updated At', 'updatedAt'],
     ];
   }, []);
 
@@ -321,7 +340,7 @@ export default function SessionDetailsPage({ session, onBack }) {
                 {documentPreviewLoading ? (
                   <div style={{ color: '#64748b', fontSize: '0.85rem' }}>Loading document…</div>
                 ) : documentPreviewError || !documentPreviewUrl ? (
-                  <div style={{ color: '#64748b', fontSize: '0.85rem' }}>Document preview unavailable</div>
+                  <div style={{ color: '#64748b', fontSize: '0.85rem' }}>User hasn't performed align face challenge</div>
                 ) : canPreviewInline && documentExtension !== 'pdf' ? (
                   <img
                     src={documentPreviewUrl}

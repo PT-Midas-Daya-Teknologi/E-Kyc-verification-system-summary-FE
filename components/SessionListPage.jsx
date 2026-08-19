@@ -83,6 +83,22 @@ function formatValue(value) {
   return String(value);
 }
 
+function formatSessionTimestamp(value) {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return formatValue(value);
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map(({ type, value: partValue }) => [type, partValue]));
+  return `${values.day} ${values.month} ${values.year} ${values.hour}:${values.minute}`;
+}
+
 export default function SessionListPage({ userId, onBack, navigateToDetails }) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -103,7 +119,11 @@ export default function SessionListPage({ userId, onBack, navigateToDetails }) {
         const response = await fetchUserSessions(userId, 0, 100);
         const fetchedSessions = response?.body?.data ?? [];
         if (!cancelled) {
-          setSessions(fetchedSessions);
+          setSessions([...fetchedSessions].sort((first, second) => {
+            const firstTime = new Date(first?.createdAt || 0).getTime();
+            const secondTime = new Date(second?.createdAt || 0).getTime();
+            return secondTime - firstTime;
+          }));
         }
       } catch (err) {
         if (!cancelled) {
@@ -173,6 +193,8 @@ export default function SessionListPage({ userId, onBack, navigateToDetails }) {
                     <th style={thStyles}>Session Name</th>
                     <th style={thStyles}>Status</th>
                     <th style={thStyles}>Reason</th>
+                    <th style={thStyles}>Created At</th>
+                    <th style={thStyles}>Updated At</th>
                     <th style={{ ...thStyles, textAlign: 'center' }}>Action</th>
                   </tr>
                 </thead>
@@ -185,6 +207,8 @@ export default function SessionListPage({ userId, onBack, navigateToDetails }) {
                         <td style={tdStyles}>{formatValue(sessionName)}</td>
                         <td style={tdStyles}>{getStatusValue(session)}</td>
                         <td style={tdStyles}>{formatValue(session?.reason ?? session?.reasonValue)}</td>
+                        <td style={tdStyles}>{formatSessionTimestamp(session?.createdAt)}</td>
+                        <td style={tdStyles}>{formatSessionTimestamp(session?.updatedAt)}</td>
                         <td style={{ ...tdStyles, textAlign: 'center' }}>
                           <button
                             type="button"
